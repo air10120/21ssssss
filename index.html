@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>蒋诗晨生日快乐 - 小游戏版</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0c0e1d, #1a1d3a);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+        
+        /* 开始屏幕 */
+        .start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(12, 14, 29, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
+            transition: opacity 1s ease;
+        }
+        
+        .start-content {
+            text-align: center;
+            max-width: 800px;
+            padding: 30px;
+            animation: fadeIn 1.5s ease;
+        }
+        
+        .start-title {
+            font-size: 4rem;
+            margin-bottom: 30px;
+            color: #ffd700;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            letter-spacing: 3px;
+            background: linear-gradient(to right, #ff8a00, #ffd700, #ff8a00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: glow 2s infinite alternate;
+        }
+        
+        .start-message {
+            font-size: 1.8rem;
+            line-height: 1.6;
+            margin-bottom: 40px;
+            color: #c0c0ff;
+        }
+        
+        .start-btn {
+            padding: 18px 45px;
+            font-size: 1.8rem;
+            background: linear-gradient(45deg, #ff6b6b, #ff8a00);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.6);
+            position: relative;
+            overflow: hidden;
+            z-index: 1000;
+            animation: pulse 2s infinite;
+        }
+        
+        .start-btn:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 35px rgba(255, 107, 107, 0.8);
+            animation: none;
+        }
+        
+        .start-btn:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.15);
+            z-index: -1;
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+        
+        .start-btn:hover:before {
+            transform: translateX(0);
+        }
+        
+        /* 确保内容在特效之下 */
+        .content-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 30px;
+            position: relative;
+            z-index: 50;
+            opacity: 0;
+            transition: opacity 1.5s ease;
+        }
+        
+        /* 置顶特效容器 */
+        .effects-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+        
+        /* 烟花效果 */
+        .firework {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            animation: firework-animation 1.5s ease-out forwards;
+            opacity: 0;
+            z-index: 101;
+        }
+        
+        /* 爱心特效 */
+        .heart {
+            position: absolute;
+            font-size: 2rem;
+            color: #ff3366;
+            animation: heart-float 5s ease-in forwards;
+            opacity: 0;
+            z-index: 100;
+            text-shadow: 0 0 10px rgba(255, 51, 102, 0.7);
+        }
+        
+        /* 头部区域 */
+        .header {
+            text-align: center;
+            padding: 80px 20px 60px;
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        h1 {
+            font-size: 4.5rem;
+            margin-bottom: 20px;
+            color: #ffd700;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+            letter-spacing: 3px;
+            background: linear-gradient(to right, #ff8a00, #ffd700, #ff8a00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: glow 2s infinite alternate;
+        }
+        
+        .subtitle {
+            font-size: 1.8rem;
+            margin-bottom: 30px;
+            color: #c0c0ff;
+            opacity: 0.9;
+        }
+        
+        .birthday-name {
+            font-size: 3.2rem;
+            color: #ff6b6b;
+            margin: 25px 0;
+            text-shadow: 0 0 10px rgba(255, 107, 107, 0.7);
+            animation: pulse 2s infinite;
+        }
+        
+        /* 祝福内容区域 */
+        .section {
+            background: rgba(15, 18, 40, 0.85);
+            border-radius: 20px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            margin: 60px 0;
+            position: relative;
+            overflow: hidden;
+            transform: translateY(30px);
+            opacity: 0;
+            transition: all 1s ease;
+        }
+        
+        .visible {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        
+        .message {
+            font-size: 1.6rem;
+            line-height: 1.8;
+            margin: 0 auto 40px;
+            text-align: center;
+        }
+        
+        .message p {
+            margin-bottom: 25px;
+        }
+        
+        .message .highlight {
+            color: #ffd700;
+            font-weight: bold;
+        }
+        
+        /* 蛋糕区域 */
+        .cake-section {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 50px;
+        }
+        
+        .birthday-cake {
+            width: 300px;
+            height: 200px;
+            position: relative;
+            flex-shrink: 0;
+        }
+        
+        .cake-layer {
+            position: absolute;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .layer-bottom {
+            width: 250px;
+            height: 70px;
+            background: linear-gradient(to bottom, #8b4513, #5d2e0f);
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+        }
+        
+        .layer-middle {
+            width: 200px;
+            height: 60px;
+            background: linear-gradient(to bottom, #d2691e, #a0522d);
+            bottom: 65px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 2;
+        }
+        
+        .layer-top {
+            width: 150px;
+            height: 50px;
+            background: linear-gradient(to bottom, #cd853f, #b5651d);
+            bottom: 115px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1;
+        }
+        
+        .candle {
+            position: absolute;
+            width: 12px;
+            height: 50px;
+            background: linear-gradient(to bottom, #fff, #f0f0f0);
+            border-radius: 5px;
+            bottom: 165px;
+            z-index: 4;
+        }
+        
+        .flame {
+            position: absolute;
+            width: 18px;
+            height: 30px;
+            background: linear-gradient(to bottom, #ffdd00, #ff8800);
+            border-radius: 50% 50% 20% 20%;
+            bottom: 215px;
+            z-index: 5;
+            box-shadow: 0 0 15px #ffdd00;
+            animation: flicker 0.8s infinite alternate;
+        }
+        
+        .candle:nth-child(1) { left: 42%; }
+        .candle:nth-child(2) { left: 48%; }
+        .candle:nth-child(3) { left: 54%; }
+        .candle:nth-child(4) { left: 60%; }
+        
+        .flame:nth-child(5) { left: 41.5%; }
+        .flame:nth-child(6) { left: 47.5%; }
+        .flame:nth-child(7) { left: 53.5%; }
+        .flame:nth-child(8) { left: 59.5%; }
+        
+        /* 小游戏区域 */
+        .game-section {
+            text-align: center;
+            padding: 50px 30px;
+            background: rgba(25, 30, 60, 0.7);
+            border-radius: 20px;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+        
+        .game-title {
+            font-size: 2.5rem;
+            color: #ffd700;
+            margin-bottom: 25px;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.4);
+        }
+        
+        .game-description {
+            font-size: 1.4rem;
+            max-width: 700px;
+            margin: 0 auto 40px;
+            line-height: 1.7;
+            color: #c0c0ff;
+        }
+        
+        .game-btn {
+            padding: 20px 50px;
+            font-size: 1.8rem;
+            background: linear-gradient(45deg, #4d9de0, #8a4fff);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            box-shadow: 0 10px 25px rgba(74, 158, 224, 0.5);
+            position: relative;
+            overflow: hidden;
+            z-index: 1000;
+            animation: pulse-blue 2s infinite;
+        }
+        
+        .game-btn:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 15px 35px rgba(74, 158, 224, 0.7);
+            animation: none;
+        }
+        
+        .game-btn:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.15);
+            z-index: -1;
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+        
+        .game-btn:hover:before {
+            transform: translateX(0);
+        }
+        
+        /* 祝福卡片 */
+        .wishes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+        
+        .wish-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s ease;
+        }
+        
+        .wish-card:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-10px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .wish-card h3 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        
+        .wish-card p {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            color: #e0e0ff;
+        }
+        
+        /* 页脚 */
+        .footer {
+            text-align: center;
+            padding: 40px 20px;
+            font-size: 1.2rem;
+            color: #a0a0ff;
+            opacity: 0.8;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            margin-top: 60px;
+        }
+        
+        /* 动画效果 */
+        @keyframes firework-animation {
+            0% {
+                transform: translate(0, 0) scale(0.2);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) scale(1);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes heart-float {
+            0% {
+                transform: translateY(100vh) scale(0.5);
+                opacity: 0.5;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px) scale(1);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes glow {
+            0% { text-shadow: 0 0 10px rgba(255, 215, 0, 0.5); }
+            100% { text-shadow: 0 0 25px rgba(255, 215, 0, 0.8), 0 0 50px rgba(255, 215, 0, 0.6); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes pulse-blue {
+            0% { transform: scale(1); box-shadow: 0 10px 25px rgba(74, 158, 224, 0.5); }
+            50% { transform: scale(1.05); box-shadow: 0 15px 35px rgba(74, 158, 224, 0.7); }
+            100% { transform: scale(1); box-shadow: 0 10px 25px rgba(74, 158, 224, 0.5); }
+        }
+        
+        @keyframes flicker {
+            0%, 100% { 
+                transform: scale(1); 
+                box-shadow: 0 0 10px #ffdd00;
+            }
+            50% { 
+                transform: scale(1.1); 
+                box-shadow: 0 0 20px #ffaa00;
+            }
+        }
+        
+        /* 滚动提示 */
+        .scroll-down {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #ffd700;
+            animation: bounce 2s infinite;
+            z-index: 50;
+        }
+        
+        .scroll-down i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translate(-50%, 0); }
+            50% { transform: translate(-50%, -10px); }
+        }
+        
+        /* 星空背景 */
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+        
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle var(--duration) infinite ease-in-out;
+            opacity: 0;
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .start-title { font-size: 3rem; }
+            .start-message { font-size: 1.4rem; }
+            h1 { font-size: 3rem; }
+            .birthday-name { font-size: 2.5rem; }
+            .message { font-size: 1.4rem; }
+            .birthday-cake { transform: scale(0.8); }
+            .section {
+                padding: 25px;
+                margin: 40px 0;
+            }
+            .start-btn {
+                padding: 15px 35px;
+                font-size: 1.5rem;
+            }
+            .game-title {
+                font-size: 2rem;
+            }
+            .game-description {
+                font-size: 1.2rem;
+            }
+            .game-btn {
+                padding: 16px 40px;
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 星空背景 -->
+    <div class="stars" id="stars"></div>
+    
+    <!-- 开始屏幕 -->
+    <div class="start-screen" id="startScreen">
+        <div class="start-content">
+            <h1 class="start-title">蒋诗晨生日快乐</h1>
+            <div class="start-message">
+                <p>点击下方按钮，开启绚丽的生日祝福</p>
+                <p>烟花与爱心特效将立即为您绽放！</p>
+            </div>
+            <button class="start-btn" id="startBtn">
+                <i class="fas fa-gift"></i> 开启生日祝福
+            </button>
+        </div>
+    </div>
+    
+    <!-- 置顶特效容器 -->
+    <div class="effects-container" id="effectsContainer"></div>
+    
+    <!-- 可滚动的内容区域 -->
+    <div class="content-container" id="contentContainer">
+        <!-- 头部区域 -->
+        <section class="header">
+            <h1>生日快乐！</h1>
+            <div class="subtitle">特别的日子，特别的祝福</div>
+            <div class="birthday-name">蒋诗晨</div>
+            
+            <div class="message">
+                <p>向下滚动查看完整祝福 <i class="fas fa-arrow-down"></i></p>
+            </div>
+            
+            <div class="scroll-down">
+                <i class="fas fa-chevron-down"></i>
+                <span>向下滚动</span>
+            </div>
+        </section>
+        
+        <!-- 祝福区域 -->
+        <section class="section" id="blessingSection">
+            <div class="message">
+                <p>亲爱的<span class="highlight">蒋诗晨</span>：</p>
+                <p>在这个特别的日子里，我想用最绚烂的方式表达我的祝福！</p>
+                <p>愿你的生活如这些烟花般<span class="highlight">璀璨夺目</span>，愿你的每一天都充满<span class="highlight">欢乐与惊喜</span>。</p>
+            </div>
+            
+            <div class="cake-section">
+                <div class="birthday-cake">
+                    <div class="cake-layer layer-bottom"></div>
+                    <div class="cake-layer layer-middle"></div>
+                    <div class="cake-layer layer-top"></div>
+                    <div class="candle"></div>
+                    <div class="candle"></div>
+                    <div class="candle"></div>
+                    <div class="candle"></div>
+                    <div class="flame"></div>
+                    <div class="flame"></div>
+                    <div class="flame"></div>
+                    <div class="flame"></div>
+                </div>
+                
+                <div class="message">
+                    <p>吹熄蜡烛，许下心愿</p>
+                    <p>愿你的每个愿望都能<span class="highlight">如烟花般绽放</span></p>
+                    <p>愿你的未来<span class="highlight">如星空般璀璨</span></p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 小游戏区域 -->
+        <section class="section game-section">
+            <h2 class="game-title">生日小游戏时间</h2>
+            <p class="game-description">
+                准备好了吗？点击下方按钮进入有趣的生日小游戏！完成游戏会有特别的惊喜等着你哦！
+            </p>
+            <button class="game-btn" id="gameBtn">
+                <i class="fas fa-gamepad"></i> 开始小游戏
+            </button>
+        </section>
+        
+        <!-- 祝福卡片 -->
+        <section class="section" id="wishesSection">
+            <h2 style="text-align: center; margin-bottom: 30px; color: #ffd700;">祝福卡片</h2>
+            
+            <div class="wishes-container">
+                <div class="wish-card">
+                    <h3><i class="fas fa-star"></i> 健康快乐</h3>
+                    <p>愿你身体健康，心情愉快，每天都充满正能量和好心情！</p>
+                </div>
+                <div class="wish-card">
+                    <h3><i class="fas fa-heart"></i> 幸福美满</h3>
+                    <p>愿你的生活充满爱与温暖，每一天都像今天一样幸福甜蜜！</p>
+                </div>
+                <div class="wish-card">
+                    <h3><i class="fas fa-gift"></i> 心想事成</h3>
+                    <p>愿你的每一个梦想都能实现，每一个目标都能达成！</p>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 页脚 -->
+        <footer class="footer">
+            <p>用❤️制作的生日祝福 | 2023年特别版</p>
+            <p>愿你拥有最美好的一年！</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const startScreen = document.getElementById('startScreen');
+            const startBtn = document.getElementById('startBtn');
+            const contentContainer = document.getElementById('contentContainer');
+            const effectsContainer = document.getElementById('effectsContainer');
+            const gameBtn = document.getElementById('gameBtn');
+            const sections = document.querySelectorAll('.section');
+            const starsContainer = document.getElementById('stars');
+            
+            // 创建星空背景
+            function createStars() {
+                for (let i = 0; i < 200; i++) {
+                    const star = document.createElement('div');
+                    star.classList.add('star');
+                    star.style.left = `${Math.random() * 100}%`;
+                    star.style.top = `${Math.random() * 100}%`;
+                    star.style.setProperty('--duration', `${Math.random() * 3 + 2}s`);
+                    star.style.animationDelay = `${Math.random() * 5}s`;
+                    starsContainer.appendChild(star);
+                }
+            }
+            
+            // 创建烟花效果
+            function createFirework(x, y, color) {
+                const particles = 80;
+                const container = document.createElement('div');
+                container.style.position = 'absolute';
+                container.style.left = `${x}px`;
+                container.style.top = `${y}px`;
+                container.style.width = '0';
+                container.style.height = '0';
+                
+                for (let i = 0; i < particles; i++) {
+                    const angle = (i / particles) * Math.PI * 2;
+                    const distance = Math.random() * 150 + 50;
+                    
+                    const particle = document.createElement('div');
+                    particle.classList.add('firework');
+                    particle.style.backgroundColor = color || getRandomColor();
+                    
+                    // 设置自定义属性用于动画
+                    particle.style.setProperty('--tx', `${Math.cos(angle) * distance}px`);
+                    particle.style.setProperty('--ty', `${Math.sin(angle) * distance}px`);
+                    
+                    // 随机大小和延迟
+                    particle.style.width = `${Math.random() * 6 + 3}px`;
+                    particle.style.height = particle.style.width;
+                    particle.style.animationDelay = `${Math.random() * 0.5}s`;
+                    
+                    container.appendChild(particle);
+                }
+                
+                effectsContainer.appendChild(container);
+                
+                // 动画结束后移除元素
+                setTimeout(() => {
+                    container.remove();
+                }, 2000);
+            }
+            
+            // 创建爱心特效
+            function createHearts(count = 20) {
+                for (let i = 0; i < count; i++) {
+                    const heart = document.createElement('div');
+                    heart.classList.add('heart');
+                    heart.innerHTML = '❤';
+                    
+                    // 随机位置
+                    const left = Math.random() * 100;
+                    heart.style.left = `${left}%`;
+                    heart.style.top = '100vh';
+                    
+                    // 随机大小和动画延迟
+                    const size = Math.random() * 1.5 + 1;
+                    heart.style.fontSize = `${size}rem`;
+                    heart.style.animationDelay = `${Math.random() * 2}s`;
+                    
+                    effectsContainer.appendChild(heart);
+                    
+                    // 动画结束后移除元素
+                    setTimeout(() => {
+                        heart.remove();
+                    }, 5000);
+                }
+            }
+            
+            // 获取随机颜色
+            function getRandomColor() {
+                const colors = [
+                    '#ff3366', '#33ccff', '#ffdd33', '#4dffb8', 
+                    '#ff6bff', '#ff8a00', '#4dc2ff', '#c56cff'
+                ];
+                return colors[Math.floor(Math.random() * colors.length)];
+            }
+            
+            // 随机位置创建烟花
+            function createRandomFirework() {
+                const x = Math.random() * window.innerWidth;
+                const y = Math.random() * window.innerHeight * 0.8;
+                createFirework(x, y, getRandomColor());
+            }
+            
+            // 创建大型烟花表演
+            function createFireworksShow() {
+                // 创建多个烟花
+                const count = 15;
+                for (let i = 0; i < count; i++) {
+                    setTimeout(() => {
+                        const x = Math.random() * window.innerWidth;
+                        const y = Math.random() * window.innerHeight * 0.7;
+                        createFirework(x, y, getRandomColor());
+                    }, i * 300);
+                }
+            }
+            
+            // 创建心形烟花特效
+            function createHeartFireworks() {
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 3;
+                
+                for (let i = 0; i < 100; i++) {
+                    const angle = (i / 100) * Math.PI * 2;
+                    const t = angle;
+                    
+                    // 心形曲线方程
+                    const x = 16 * Math.pow(Math.sin(t), 3);
+                    const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+                    
+                    const particle = document.createElement('div');
+                    particle.classList.add('firework');
+                    particle.style.backgroundColor = '#ff3366';
+                    particle.style.width = '6px';
+                    particle.style.height = '6px';
+                    
+                    // 缩放和定位
+                    const scale = 10;
+                    particle.style.setProperty('--tx', `${x * scale}px`);
+                    particle.style.setProperty('--ty', `${y * scale}px`);
+                    
+                    particle.style.animationDelay = `${i * 0.01}s`;
+                    particle.style.animationDuration = '2s';
+                    
+                    const container = document.createElement('div');
+                    container.style.position = 'absolute';
+                    container.style.left = `${centerX}px`;
+                    container.style.top = `${centerY}px`;
+                    container.appendChild(particle);
+                    effectsContainer.appendChild(container);
+                    
+                    setTimeout(() => {
+                        container.remove();
+                    }, 2500);
+                }
+            }
+            
+            // 开始庆祝
+            function startCelebration() {
+                // 隐藏开始屏幕
+                startScreen.style.opacity = '0';
+                
+                // 立即开始特效
+                createFireworksShow();
+                createHearts(50);
+                createHeartFireworks();
+                
+                setTimeout(() => {
+                    startScreen.style.display = 'none';
+                    contentContainer.style.opacity = '1';
+                    
+                    // 显示内容区域
+                    setTimeout(() => {
+                        sections.forEach((section, index) => {
+                            setTimeout(() => {
+                                section.classList.add('visible');
+                            }, index * 300);
+                        });
+                    }, 500);
+                    
+                    // 持续特效
+                    setInterval(() => {
+                        if (Math.random() > 0.7) {
+                            createRandomFirework();
+                        }
+                    }, 800);
+                    
+                    setInterval(() => {
+                        if (Math.random() > 0.8) {
+                            createHearts(5);
+                        }
+                    }, 3000);
+                }, 1000);
+            }
+            
+            // 跳转到小游戏页面
+            function startGame() {
+                // 添加跳转动画效果
+                contentContainer.style.opacity = '0';
+                contentContainer.style.transform = 'translateY(50px)';
+                contentContainer.style.transition = 'all 1s ease';
+                
+                // 播放确认音效
+                const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-select-click-1109.mp3');
+                audio.play();
+                
+                // 添加跳转前的烟花特效
+                createFireworksShow();
+                createHearts(30);
+                
+                setTimeout(() => {
+                    window.location.href = 'gamechoose.html';
+                }, 1500);
+            }
+            
+            // 事件监听
+            startBtn.addEventListener('click', startCelebration);
+            gameBtn.addEventListener('click', startGame);
+            
+            // 初始创建
+            createStars();
+            
+            // 滚动动画效果
+            window.addEventListener('scroll', () => {
+                sections.forEach(section => {
+                    const sectionTop = section.getBoundingClientRect().top;
+                    const windowHeight = window.innerHeight;
+                    
+                    if (sectionTop < windowHeight * 0.75) {
+                        section.classList.add('visible');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>
