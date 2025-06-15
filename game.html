@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>生日羊了个羊 - 堆叠版</title>
+    <title>生日羊了个羊 - 优化版</title>
     <style>
         * {
             margin: 0;
@@ -438,6 +438,34 @@
             justify-content: center;
             z-index: 10;
         }
+        
+        /* 新添加的提示效果 */
+        .hint-highlight {
+            animation: pulse 1s infinite;
+            box-shadow: 0 0 10px gold;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .covered-count {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            background: rgba(0,0,0,0.3);
+            color: white;
+            font-size: 10px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
     </style>
 </head>
 <body>
@@ -545,7 +573,8 @@
             cards: [],
             cardData: [],
             isAnimating: false,
-            lowPerfMode: false
+            lowPerfMode: false,
+            coveredCards: {} // 跟踪每张卡片被覆盖的数量
         };
         
         // DOM 元素
@@ -572,7 +601,9 @@
                 BIRTHDAY_ITEMS.length
             );
             
-            const totalCards = DIFFICULTY_SETTINGS.baseCards + (level - 1) * DIFFICULTY_SETTINGS.cardsPerLevel;
+            // 确保卡片总数是3的倍数
+            let totalCards = DIFFICULTY_SETTINGS.baseCards + (level - 1) * DIFFICULTY_SETTINGS.cardsPerLevel;
+            totalCards = totalCards - (totalCards % 3);
             
             const slotCount = Math.max(
                 3, 
@@ -604,6 +635,7 @@
             gameState.cards = [];
             gameState.cardData = [];
             gameState.isAnimating = false;
+            gameState.coveredCards = {};
             
             gameState.powerups = {
                 shuffle: Math.max(1, 4 - Math.floor(gameState.level / 3)),
@@ -624,18 +656,26 @@
             const cardTypes = difficulty.cardTypes;
             const totalCards = difficulty.totalCards;
             
+            // 确保每种类型的卡片数量是3的倍数
             const cardsPerType = Math.floor(totalCards / cardTypes);
+            let baseCards = cardsPerType - (cardsPerType % 3);
+            let remainingCards = totalCards - (baseCards * cardTypes);
             
             for (let i = 0; i < cardTypes; i++) {
                 const item = BIRTHDAY_ITEMS[i % BIRTHDAY_ITEMS.length];
-                for (let j = 0; j < cardsPerType; j++) {
+                for (let j = 0; j < baseCards; j++) {
                     items.push(item);
                 }
             }
             
-            const remainingCards = totalCards - items.length;
-            for (let i = 0; i < remainingCards; i++) {
-                items.push(BIRTHDAY_ITEMS[Math.floor(Math.random() * cardTypes)]);
+            // 分配剩余的卡片（以3为单位）
+            while (remainingCards > 0) {
+                const randomType = Math.floor(Math.random() * cardTypes);
+                const item = BIRTHDAY_ITEMS[randomType % BIRTHDAY_ITEMS.length];
+                for (let j = 0; j < 3; j++) {
+                    items.push(item);
+                }
+                remainingCards -= 3;
             }
             
             shuffleArray(items);
@@ -664,6 +704,7 @@
             gameBoard.innerHTML = '';
             gameState.cards = [];
             gameState.cardData = [];
+            gameState.coveredCards = {};
             
             const boardWidth = gameBoard.clientWidth;
             const boardHeight = gameBoard.clientHeight;
@@ -739,6 +780,12 @@
                 stackIndicator.textContent = stackLevel + 1;
                 card.appendChild(stackIndicator);
                 
+                // 添加覆盖数量指示器
+                const coveredIndicator = document.createElement('div');
+                coveredIndicator.className = 'covered-count';
+                coveredIndicator.textContent = '0';
+                card.appendChild(coveredIndicator);
+                
                 if (zIndex < maxLayers - 1) {
                     card.classList.add('covered');
                 }
@@ -749,6 +796,52 @@
                 gameBoard.appendChild(card);
                 gameState.cards.push(card);
             }
+            
+            // 计算每张卡片被覆盖的数量
+            calculateCoveredCounts();
+        }
+        
+        // 计算每张卡片被覆盖的数量
+        function calculateCoveredCounts() {
+            const maxLayers = calculateDifficulty().layers;
+            
+            for (let i = 0; i < gameState.cardData.length; i++) {
+                const card = gameState.cardData[i];
+                if (!card) continue;
+                
+                let coveredCount = 0;
+                
+                for (let j = 0; j < gameState.cardData.length; j++) {
+                    if (i === j) continue;
+                    const otherCard = gameState.cardData[j];
+                    if (!otherCard) continue;
+                    
+                    if (otherCard.zIndex > card.zIndex) {
+                        if (isOverlapping(card, otherCard)) {
+                            coveredCount++;
+                        }
+                    }
+                }
+                
+                gameState.coveredCards[i] = coveredCount;
+                
+                // 更新卡片上的指示器
+                const cardElement = gameState.cards[i];
+                if (cardElement) {
+                    const coveredIndicator = cardElement.querySelector('.covered-count');
+                    if (coveredIndicator) {
+                        coveredIndicator.textContent = coveredCount;
+                    }
+                }
+            }
+        }
+        
+        // 检查两张卡片是否重叠
+        function isOverlapping(card1, card2) {
+            return card1.x < card2.x + card2.width &&
+                   card1.x + card1.width > card2.x &&
+                   card1.y < card2.y + card2.height &&
+                   card1.y + card1.height > card2.y;
         }
         
         // 洗牌算法
@@ -791,36 +884,14 @@
         
         // 检测卡片是否被覆盖
         function isCardCovered(cardIndex) {
-            const card = gameState.cardData[cardIndex];
-            if (!card) return false;
-            
-            const cardCenterX = card.x + card.width / 2;
-            const cardCenterY = card.y + card.height / 2;
-            
-            for (let i = 0; i < gameState.cardData.length; i++) {
-                if (i === cardIndex) continue;
-                if (!gameState.cardData[i]) continue;
-                
-                const otherCard = gameState.cardData[i];
-                
-                if (otherCard.zIndex > card.zIndex) {
-                    if (cardCenterX > otherCard.x && 
-                        cardCenterX < otherCard.x + otherCard.width &&
-                        cardCenterY > otherCard.y && 
-                        cardCenterY < otherCard.y + otherCard.height) {
-                        return true;
-                    }
-                }
-            }
-            
-            return false;
+            return gameState.coveredCards[cardIndex] > 0;
         }
         
         // 选择卡片
         function selectCard(card, index) {
             if (gameState.isAnimating) return;
             if (isCardCovered(index)) {
-                messageEl.textContent = '这张卡片被覆盖了！请先移开上层的卡片';
+                messageEl.textContent = `这张卡片被覆盖了！请先移开上层的卡片（覆盖数: ${gameState.coveredCards[index]})`;
                 
                 const cardElement = gameState.cards[index];
                 cardElement.style.boxShadow = '0 0 0 2px red';
@@ -878,11 +949,13 @@
                 gameState.selectedCard = null;
                 
                 const match = checkForMatches();
-                checkGameEnd();
-                
                 if (!match) {
                     messageEl.textContent = '继续寻找相同的元素！';
                 }
+                
+                // 重新计算覆盖状态
+                calculateCoveredCounts();
+                checkGameEnd();
             });
         }
         
@@ -1068,10 +1141,38 @@
             gameState.powerups.hint--;
             updatePowerups();
             
+            // 1. 首先检查卡槽中是否有两个相同的卡片
+            const slotCounts = {};
+            gameState.slots.forEach(item => {
+                if (item) {
+                    slotCounts[item] = (slotCounts[item] || 0) + 1;
+                }
+            });
+            
+            for (const item in slotCounts) {
+                if (slotCounts[item] >= 2) {
+                    // 尝试在牌堆中找到第三个相同的卡片
+                    for (let i = 0; i < gameState.board.length; i++) {
+                        if (gameState.board[i] === item && !isCardCovered(i)) {
+                            const card = document.querySelector(`.card[data-index="${i}"]`);
+                            if (card) {
+                                card.classList.add('hint-highlight');
+                                setTimeout(() => {
+                                    card.classList.remove('hint-highlight');
+                                }, 1500);
+                                
+                                messageEl.textContent = `卡槽中有两个${item}，点击牌堆中的${item}完成消除！`;
+                                return;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // 2. 如果没有找到卡槽中的配对，则找牌堆中的配对
             let found = false;
             for (let i = 0; i < gameState.board.length && !found; i++) {
-                if (gameState.board[i] === null) continue;
-                if (isCardCovered(i)) continue;
+                if (gameState.board[i] === null || isCardCovered(i)) continue;
                 
                 for (let j = i + 1; j < gameState.board.length; j++) {
                     if (gameState.board[j] && gameState.board[i] === gameState.board[j] && !isCardCovered(j)) {
@@ -1079,12 +1180,12 @@
                         const card2 = document.querySelector(`.card[data-index="${j}"]`);
                         
                         if (card1 && card2) {
-                            card1.style.boxShadow = '0 0 0 2px #4cd964';
-                            card2.style.boxShadow = '0 0 0 2px #4cd964';
+                            card1.classList.add('hint-highlight');
+                            card2.classList.add('hint-highlight');
                             
                             setTimeout(() => {
-                                if (card1) card1.style.boxShadow = '';
-                                if (card2) card2.style.boxShadow = '';
+                                card1.classList.remove('hint-highlight');
+                                card2.classList.remove('hint-highlight');
                             }, 1500);
                             
                             messageEl.textContent = '找到一对相同的卡片！';
